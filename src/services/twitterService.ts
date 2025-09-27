@@ -35,6 +35,7 @@ export class TwitterService {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       logger.error('❌ Error de conexión:', errorMessage);
+      logger.error('❌ Detalles del error:', error);
       throw error;
     }
   }

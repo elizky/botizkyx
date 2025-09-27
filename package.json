@@ -9,6 +9,8 @@
     "dev": "nodemon --exec ts-node src/main.ts",
     "build": "tsc",
     "start:prod": "node dist/main.js",
+    "start:dashboard": "ts-node src/main-dashboard.ts",
+    "start:dashboard:prod": "node dist/main-dashboard.js",
     "cleanup": "ts-node src/cleanup.ts",
     "callback": "node callback-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -17,7 +19,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^6.16.2",
     "dotenv": "^16.4.5",
+    "prisma": "^6.16.2",
     "twitter-api-v2": "^1.17.0"
   },
   "devDependencies": {

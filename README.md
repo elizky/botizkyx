@@ -1,27 +1,39 @@
 # BotIzkyX 🤖
 
-Bot automatizado para publicar tweets en X (Twitter) usando la API oficial.
+Bot automatizado para publicar tweets en X (Twitter) con dashboard de gestión de mensajes.
 
 ## 🚀 Características
 
-- ✅ Publicación automática de tweets
-- ✅ Sistema de logging avanzado
-- ✅ Configuración centralizada
-- ✅ Manejo de errores robusto
-- ✅ Arquitectura modular y escalable
+- ✅ **Dashboard Web** - Interfaz para gestionar mensajes
+- ✅ **Publicación automática** - Tweets programados diariamente
+- ✅ **Cola de mensajes** - Sistema de gestión de contenido
+- ✅ **Rate limit handling** - Manejo inteligente de límites de API
+- ✅ **Base de datos** - Persistencia con Prisma + SQLite
+- ✅ **GitHub Actions** - Automatización completa
+- ✅ **TypeScript** - Código tipado y mantenible
 
 ## 📁 Estructura del Proyecto
 
 ```
 botizkyx/
-├── src/
+├── src/                   # Bot principal (TypeScript)
 │   ├── services/          # Servicios (Twitter API)
 │   ├── utils/             # Utilidades (Logger, etc.)
 │   ├── config/            # Configuración
-│   └── bot.js             # Lógica principal del bot
+│   ├── types/             # Definiciones de tipos
+│   ├── bot.ts             # Bot original
+│   ├── bot-dashboard.ts   # Bot integrado con dashboard
+│   └── main-dashboard.ts  # Punto de entrada del bot dashboard
+├── dashboard/             # Dashboard Next.js
+│   ├── src/
+│   │   ├── app/           # App Router (Next.js 13+)
+│   │   ├── components/    # Componentes React
+│   │   └── lib/           # Utilidades del dashboard
+│   ├── prisma/            # Esquema de base de datos
+│   └── package.json
+├── .github/workflows/     # GitHub Actions
 ├── logs/                  # Archivos de log
-├── main.js                # Punto de entrada
-├── package.json
+├── dist/                  # Código compilado
 └── README.md
 ```
 
@@ -33,23 +45,45 @@ botizkyx/
    cd botizkyx
    ```
 
-2. **Instalar dependencias**
+2. **Instalar dependencias del bot**
    ```bash
    npm install
    ```
 
-3. **Configurar variables de entorno**
+3. **Instalar dependencias del dashboard**
+   ```bash
+   cd dashboard
+   npm install
+   cd ..
+   ```
+
+4. **Configurar variables de entorno**
    ```bash
    cp .env.example .env
-   # Editar .env con tus credenciales
+   # Editar .env con tus credenciales de Twitter
+   ```
+
+5. **Configurar variables del dashboard**
+   ```bash
+   cd dashboard
+   cp .env.local.example .env.local
+   # Editar .env.local con credenciales y contraseña
+   cd ..
+   ```
+
+6. **Configurar base de datos**
+   ```bash
+   cd dashboard
+   npx prisma generate
+   npx prisma db push
+   cd ..
    ```
 
 ## ⚙️ Configuración
 
 ### Variables de Entorno
 
-Crea un archivo `.env` con las siguientes variables:
-
+#### Bot Principal (`.env`)
 ```env
 # Twitter API Credentials - OAuth 1.0a
 TWITTER_APP_KEY=tu_api_key
@@ -63,6 +97,18 @@ LOG_TO_FILE=true
 NODE_ENV=development
 ```
 
+#### Dashboard (`.env.local`)
+```env
+# Twitter API Credentials (mismas que el bot)
+TWITTER_APP_KEY=tu_api_key
+TWITTER_APP_SECRET=tu_api_secret
+TWITTER_ACCESS_TOKEN=tu_access_token
+TWITTER_ACCESS_SECRET=tu_access_token_secret
+
+# Contraseña del dashboard
+DASHBOARD_PASSWORD=tu_contraseña_segura
+```
+
 ### Obtener Credenciales de Twitter
 
 1. Ve a [developer.x.com](https://developer.x.com)
@@ -72,36 +118,84 @@ NODE_ENV=development
 
 ## 🚀 Uso
 
-### Ejecutar el bot
+### Dashboard Web
 ```bash
-npm start
+cd dashboard
+npm run dev
+# Abrir http://localhost:3000
 ```
 
-### Ejecutar servidor de callback (opcional)
+### Bot Principal
 ```bash
-npm run callback
+# Bot original (mensaje fijo)
+npm start
+
+# Bot dashboard (lee de base de datos)
+npm run start:dashboard
+```
+
+### Compilar para producción
+```bash
+# Compilar bot
+npm run build
+
+# Compilar dashboard
+cd dashboard
+npm run build
+cd ..
 ```
 
 ## 📝 Scripts Disponibles
 
-- `npm start` - Ejecutar el bot
-- `npm run callback` - Ejecutar servidor de callback
-- `npm test` - Ejecutar tests (próximamente)
+### Bot Principal
+- `npm start` - Ejecutar bot original
+- `npm run start:dashboard` - Ejecutar bot dashboard
+- `npm run build` - Compilar TypeScript
+- `npm run start:prod` - Ejecutar bot compilado
+- `npm run start:dashboard:prod` - Ejecutar bot dashboard compilado
+
+### Dashboard
+- `npm run dev` - Desarrollo
+- `npm run build` - Compilar para producción
+- `npm run start` - Ejecutar en producción
+
+## 🤖 GitHub Actions
+
+El proyecto incluye automatización completa con GitHub Actions:
+
+### Tweet Diario (`tweet-daily.yml`)
+- **Frecuencia**: Diario a las 12:00 UTC (9:00 AM Argentina)
+- **Función**: Ejecuta el bot dashboard automáticamente
+- **Trigger**: Manual desde GitHub UI también disponible
+
+### Limpieza de Cuenta (`cleanup.yml`)
+- **Frecuencia**: Manual (workflow_dispatch)
+- **Función**: Limpia tweets, unfollows, etc.
+- **Uso**: Solo cuando necesites limpiar la cuenta
 
 ## 🔧 Desarrollo
 
 ### Estructura de Archivos
 
-- **`src/bot.js`** - Clase principal del bot
-- **`src/services/twitterService.js`** - Servicio para interactuar con Twitter API
-- **`src/utils/logger.js`** - Sistema de logging
-- **`src/config/config.js`** - Configuración centralizada
+#### Bot Principal
+- **`src/bot.ts`** - Bot original con mensaje fijo
+- **`src/bot-dashboard.ts`** - Bot integrado con dashboard
+- **`src/services/twitterService.ts`** - Servicio Twitter API
+- **`src/utils/logger.ts`** - Sistema de logging
+- **`src/config/config.ts`** - Configuración centralizada
+
+#### Dashboard
+- **`dashboard/src/app/`** - App Router (Next.js 13+)
+- **`dashboard/src/components/`** - Componentes React
+- **`dashboard/src/lib/`** - Utilidades del dashboard
+- **`dashboard/prisma/schema.prisma`** - Esquema de base de datos
 
 ### Agregar Nuevas Funcionalidades
 
-1. **Nuevos servicios**: Agregar en `src/services/`
-2. **Utilidades**: Agregar en `src/utils/`
-3. **Configuración**: Modificar `src/config/config.js`
+1. **Bot**: Modificar `src/bot-dashboard.ts`
+2. **Dashboard**: Agregar componentes en `dashboard/src/components/`
+3. **API**: Agregar rutas en `dashboard/src/app/api/`
+4. **Base de datos**: Modificar `dashboard/prisma/schema.prisma`
 
 ## 📊 Logging
 
@@ -109,30 +203,55 @@ El bot genera logs detallados en:
 - **Consola**: Para desarrollo
 - **Archivos**: En la carpeta `logs/` (formato JSON)
 
+## 🚀 Deploy
+
+### Vercel (Recomendado)
+1. Conectar repositorio a Vercel
+2. Configurar variables de entorno
+3. Deploy automático desde `main`
+
+### Variables de entorno para Vercel:
+- `TWITTER_APP_KEY`
+- `TWITTER_APP_SECRET`
+- `TWITTER_ACCESS_TOKEN`
+- `TWITTER_ACCESS_SECRET`
+- `DASHBOARD_PASSWORD`
+
 ## 🛡️ Seguridad
 
 - ⚠️ **Nunca** compartas tus tokens de API
-- ⚠️ **Nunca** subas el archivo `.env` al repositorio
+- ⚠️ **Nunca** subas archivos `.env` al repositorio
 - ✅ Usa un gestor de contraseñas para almacenar tokens
+- ✅ Configura contraseña segura para el dashboard
 
-## 🤝 Contribuir
+## 🔄 Flujo de Trabajo
 
-1. Fork el proyecto
-2. Crea una rama para tu feature
-3. Commit tus cambios
-4. Push a la rama
-5. Abre un Pull Request
+1. **Agregar mensajes** en el dashboard
+2. **GitHub Actions** ejecuta diariamente
+3. **Bot dashboard** lee mensajes de la base de datos
+4. **Twitter API** publica el primer mensaje pendiente
+5. **Base de datos** marca como posteado y mueve a historial
+
+## 🆘 Solución de Problemas
+
+### Rate Limits
+- El bot maneja automáticamente los límites de Twitter API
+- Los mensajes permanecen en cola si hay rate limit
+- Se reintenta en la próxima ejecución
+
+### Errores de Autenticación
+- Verifica que los tokens sean correctos
+- Asegúrate de que los permisos sean "Read and write"
+- Regenera tokens si es necesario
+
+### Dashboard no carga
+- Verifica que las variables de entorno estén configuradas
+- Revisa que la base de datos esté inicializada
+- Comprueba los logs del servidor
 
 ## 📄 Licencia
 
 ISC License
-
-## 🆘 Soporte
-
-Si tienes problemas:
-1. Revisa los logs en `logs/`
-2. Verifica tu configuración en `.env`
-3. Asegúrate de que los permisos de tu app sean "Read and write"
 
 ---
 

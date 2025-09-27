@@ -31,14 +31,11 @@ jobs:
       - name: 🏗️ Compilar TypeScript
         run: npm run build
         
-      - name: 🤖 Ejecutar bot
+      - name: 🤖 Ejecutar bot dashboard
         run: |
-          if [ -n "${{ github.event.inputs.message }}" ]; then
-            echo "Mensaje personalizado: ${{ github.event.inputs.message }}"
-            # Aquí podrías modificar el bot para usar el mensaje personalizado
-            # Por ahora usamos el mensaje por defecto
-          fi
-          npm run start:prod
+          echo "Ejecutando bot en modo dashboard..."
+          echo "El bot buscará mensajes pendientes en la base de datos"
+          npm run start:dashboard:prod
         env:
           TWITTER_APP_KEY: ${{ secrets.TWITTER_APP_KEY }}
           TWITTER_APP_SECRET: ${{ secrets.TWITTER_APP_SECRET }}
