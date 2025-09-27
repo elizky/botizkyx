@@ -31,21 +31,20 @@ jobs:
       - name: 🏗️ Compilar TypeScript
         run: npm run build
         
-      - name: 🤖 Ejecutar bot (versión simple)
-        run: node main.js
+      - name: 🤖 Ejecutar bot
+        run: |
+          if [ -n "${{ github.event.inputs.message }}" ]; then
+            echo "Mensaje personalizado: ${{ github.event.inputs.message }}"
+            # Aquí podrías modificar el bot para usar el mensaje personalizado
+            # Por ahora usamos el mensaje por defecto
+          fi
+          npm run start:prod
         env:
           TWITTER_APP_KEY: ${{ secrets.TWITTER_APP_KEY }}
           TWITTER_APP_SECRET: ${{ secrets.TWITTER_APP_SECRET }}
           TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
           TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
-          
-      - name: 🤖 Ejecutar bot (versión TypeScript)
-        run: npm run start:prod
-        env:
-          TWITTER_APP_KEY: ${{ secrets.TWITTER_APP_KEY }}
-          TWITTER_APP_SECRET: ${{ secrets.TWITTER_APP_SECRET }}
-          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
-          TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
+          CUSTOM_MESSAGE: ${{ github.event.inputs.message }}
           
       - name: 📊 Subir logs (si existen)
         if: always()

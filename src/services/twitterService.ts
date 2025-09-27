@@ -103,6 +103,7 @@ export class TwitterService {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       logger.error('❌ Error obteniendo mis tweets:', errorMessage);
+      logger.error('Detalles del error:', error);
       throw error;
     }
   }
@@ -135,6 +136,7 @@ export class TwitterService {
         const me = await this.client.v2.me();
         const timeline = await this.client.v2.userTimeline(me.data.id, {
           max_results: 100,
+          'tweet.fields': 'id,text,created_at',
           ...(paginationToken && { pagination_token: paginationToken }),
         });
 
@@ -183,10 +185,11 @@ export class TwitterService {
 
       const me = await this.client.v2.me();
       const following = await this.client.v2.following(me.data.id, {
-        max_results: maxResults,
+        max_results: Math.min(maxResults, 100), // Twitter limita a 100 por petición
       });
 
-      const users = following.data || [];
+      // following.data es un array de usuarios directamente
+      const users = Array.isArray(following.data) ? following.data : [];
       logger.info(`✅ Encontrados ${users.length} usuarios seguidos`);
 
       return {
@@ -196,6 +199,7 @@ export class TwitterService {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       logger.error('❌ Error obteniendo seguidos:', errorMessage);
+      logger.error('Detalles del error:', error);
       throw error;
     }
   }
@@ -232,7 +236,8 @@ export class TwitterService {
           ...(paginationToken && { pagination_token: paginationToken }),
         });
 
-        const users = following.data || [];
+        // following.data es un array de usuarios directamente
+        const users = Array.isArray(following.data) ? following.data : [];
 
         if (users.length === 0) {
           break;
