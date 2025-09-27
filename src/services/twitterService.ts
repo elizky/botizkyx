@@ -81,4 +81,209 @@ export class TwitterService {
       throw error;
     }
   }
+
+  // ===== MÉTODOS DE LIMPIEZA DE CUENTA =====
+
+  async obtenerMisTweets(maxResults: number = 100): Promise<TimelineResult> {
+    try {
+      logger.info(`📖 Obteniendo mis tweets (máximo ${maxResults})...`);
+
+      const me = await this.client.v2.me();
+      const timeline = await this.client.v2.userTimeline(me.data.id, {
+        max_results: maxResults,
+      });
+
+      const tweets = timeline.data?.data || [];
+      logger.info(`✅ Encontrados ${tweets.length} tweets`);
+
+      return {
+        success: true,
+        tweets: tweets,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      logger.error('❌ Error obteniendo mis tweets:', errorMessage);
+      throw error;
+    }
+  }
+
+  async eliminarTweet(tweetId: string): Promise<boolean> {
+    try {
+      logger.info(`🗑️ Eliminando tweet: ${tweetId}`);
+
+      await this.client.v2.deleteTweet(tweetId);
+      logger.info(`✅ Tweet ${tweetId} eliminado exitosamente`);
+
+      return true;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      logger.error(`❌ Error eliminando tweet ${tweetId}:`, errorMessage);
+      return false;
+    }
+  }
+
+  async eliminarTodosLosTweets(): Promise<{ eliminados: number; errores: number }> {
+    try {
+      logger.info('🧹 Iniciando limpieza completa de tweets...');
+
+      let eliminados = 0;
+      let errores = 0;
+      let paginationToken: string | undefined;
+
+      do {
+        // Obtener tweets en lotes
+        const me = await this.client.v2.me();
+        const timeline = await this.client.v2.userTimeline(me.data.id, {
+          max_results: 100,
+          ...(paginationToken && { pagination_token: paginationToken }),
+        });
+
+        const tweets = timeline.data?.data || [];
+
+        if (tweets.length === 0) {
+          break;
+        }
+
+        logger.info(`📦 Procesando lote de ${tweets.length} tweets...`);
+
+        // Eliminar tweets uno por uno (respetando límites de rate)
+        for (const tweet of tweets) {
+          const eliminado = await this.eliminarTweet(tweet.id);
+
+          if (eliminado) {
+            eliminados++;
+          } else {
+            errores++;
+          }
+
+          // Pausa para respetar límites de rate (1 segundo entre eliminaciones)
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+
+        // Actualizar token de paginación
+        paginationToken = timeline.meta?.next_token;
+
+        // Pausa entre lotes (2 segundos)
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      } while (paginationToken);
+
+      logger.info(`✅ Limpieza completada: ${eliminados} eliminados, ${errores} errores`);
+
+      return { eliminados, errores };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      logger.error('❌ Error en limpieza de tweets:', errorMessage);
+      throw error;
+    }
+  }
+
+  async obtenerSeguidos(maxResults: number = 1000): Promise<{ success: boolean; users: any[] }> {
+    try {
+      logger.info(`👥 Obteniendo usuarios seguidos (máximo ${maxResults})...`);
+
+      const me = await this.client.v2.me();
+      const following = await this.client.v2.following(me.data.id, {
+        max_results: maxResults,
+      });
+
+      const users = following.data || [];
+      logger.info(`✅ Encontrados ${users.length} usuarios seguidos`);
+
+      return {
+        success: true,
+        users: users,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      logger.error('❌ Error obteniendo seguidos:', errorMessage);
+      throw error;
+    }
+  }
+
+  async dejarDeSeguir(usuarioId: string): Promise<boolean> {
+    try {
+      logger.info(`👋 Dejando de seguir usuario: ${usuarioId}`);
+
+      const me = await this.client.v2.me();
+      await this.client.v2.unfollow(me.data.id, usuarioId);
+      logger.info(`✅ Dejado de seguir: ${usuarioId}`);
+
+      return true;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      logger.error(`❌ Error dejando de seguir ${usuarioId}:`, errorMessage);
+      return false;
+    }
+  }
+
+  async dejarDeSeguirATodos(): Promise<{ unfollows: number; errores: number }> {
+    try {
+      logger.info('🧹 Iniciando unfollow masivo...');
+
+      let unfollows = 0;
+      let errores = 0;
+      let paginationToken: string | undefined;
+
+      do {
+        // Obtener seguidos en lotes
+        const me = await this.client.v2.me();
+        const following = await this.client.v2.following(me.data.id, {
+          max_results: 100,
+          ...(paginationToken && { pagination_token: paginationToken }),
+        });
+
+        const users = following.data || [];
+
+        if (users.length === 0) {
+          break;
+        }
+
+        logger.info(`📦 Procesando lote de ${users.length} usuarios...`);
+
+        // Dejar de seguir uno por uno
+        for (const user of users) {
+          const unfollowed = await this.dejarDeSeguir(user.id);
+
+          if (unfollowed) {
+            unfollows++;
+          } else {
+            errores++;
+          }
+
+          // Pausa para respetar límites de rate (1 segundo entre unfollows)
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+
+        // Actualizar token de paginación
+        paginationToken = following.meta?.next_token;
+
+        // Pausa entre lotes (2 segundos)
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      } while (paginationToken);
+
+      logger.info(`✅ Unfollow completado: ${unfollows} unfollows, ${errores} errores`);
+
+      return { unfollows, errores };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      logger.error('❌ Error en unfollow masivo:', errorMessage);
+      throw error;
+    }
+  }
+
+  async seguirUsuario(usuarioId: string): Promise<boolean> {
+    try {
+      logger.info(`👋 Siguiendo usuario: ${usuarioId}`);
+
+      const me = await this.client.v2.me();
+      await this.client.v2.follow(me.data.id, usuarioId);
+      logger.info(`✅ Siguiendo: ${usuarioId}`);
+
+      return true;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      logger.error(`❌ Error siguiendo ${usuarioId}:`, errorMessage);
+      return false;
+    }
+  }
 }

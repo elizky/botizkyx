@@ -9,6 +9,7 @@
     "dev": "nodemon --exec ts-node src/main.ts",
     "build": "tsc",
     "start:prod": "node dist/main.js",
+    "cleanup": "ts-node src/cleanup.ts",
     "callback": "node callback-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -1,0 +1,56 @@
+name: Tweet Diario Automático
+
+on:
+  schedule:
+    # Ejecuta todos los días a las 12:00 UTC (9:00 AM Argentina)
+    - cron: '0 12 * * *'
+  workflow_dispatch: # Permite ejecutar manualmente desde GitHub UI
+    inputs:
+      message:
+        description: 'Mensaje personalizado para el tweet'
+        required: false
+        type: string
+
+jobs:
+  tweet:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+        
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: 📦 Instalar dependencias
+        run: npm ci
+        
+      - name: 🏗️ Compilar TypeScript
+        run: npm run build
+        
+      - name: 🤖 Ejecutar bot (versión simple)
+        run: node main.js
+        env:
+          TWITTER_APP_KEY: ${{ secrets.TWITTER_APP_KEY }}
+          TWITTER_APP_SECRET: ${{ secrets.TWITTER_APP_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
+          
+      - name: 🤖 Ejecutar bot (versión TypeScript)
+        run: npm run start:prod
+        env:
+          TWITTER_APP_KEY: ${{ secrets.TWITTER_APP_KEY }}
+          TWITTER_APP_SECRET: ${{ secrets.TWITTER_APP_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
+          
+      - name: 📊 Subir logs (si existen)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-logs
+          path: logs/
+          retention-days: 7
