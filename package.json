@@ -1,0 +1,28 @@
+{
+  "name": "botizkyx",
+  "version": "1.0.0",
+  "description": "Bot que publica frases en X automáticamente",
+  "main": "main.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "ts-node src/main.ts",
+    "dev": "nodemon --exec ts-node src/main.ts",
+    "build": "tsc",
+    "start:prod": "node dist/main.js",
+    "callback": "node callback-server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "twitter-api-v2": "^1.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  }
+}
